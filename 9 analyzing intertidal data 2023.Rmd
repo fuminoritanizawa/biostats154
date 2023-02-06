@@ -1,0 +1,163 @@
+---
+title: "Analysis of Intertidal Lab data"
+author: "Fuminori Tanizawa"
+date: "6 February 2023"
+output: pdf_document
+---
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+
+# Thinking about your study
+
+Before we dive into analyzing the data, let's think about the biology for a moment.
+
+### 1. What question were you investigating, and what was your hypothesis?
+
+We hypothesized the lower tide, the more chiton.
+
+
+### 2. What variables did you record, and what relationship between those variables should you examine to test your hypothesis? Did you record these variables directly, or are they something that you will need to calculate from the variables you did record?
+
+place, size, number
+
+### 3. On a blackboard, draw a sketch of one or more plots that you might create to examine your data. What sorts of geoms do you want to use? What is the mapping between data variables and aesthetics? 
+Include axis labels and a sketch of what your data might look like if your hypothesis is supported. Also sketch what it might look like if your hypothesis is not supported by the data.
+(If you have paired data, you'll want to be sure to make that pairing clear in your plot. We haven't looked at plots like that in the class yet, but you can take a look at <https://drive.google.com/file/d/1k2laDEMkMrZd1M76zT4vnyCh5T3j6uFf/view?usp=sharing> for inspiration.)
+
+
+# Starting to analyze your intial ecology data
+
+I'm going to start this analysis assuming that you have *unpaired* data. If you have paired data, please read the next two sections, then look for the note on paired data.
+
+## Getting your data into R
+
+The first step for your data analysis is to get your code into R. This is easiest if you import your data from a column delimited (usually called .csv) or tab-delimited (sometimes called .tsv) or an Excel file. 
+
+To do this, your life will be easier if you create a folder for this analysis, and then make sure this .Rmd file and you data file are both in that folder. Prof Stoebel will demonstrate import in class.
+
+(There is also an experimental package that allows R to import directly from Google Sheets, and you are welcome to investigate it on your own time. See the [pacakge description](https://googlesheets4.tidyverse.org/index.html) if you'd like to learn more.) 
+
+```{r}
+sample_intertidal_data <- read_excel("BIO54_154 Beach Data.xlsx")
+# view(sample_intertidal_data)
+head(sample_intertidal_data)
+```
+
+
+Once you've imported your data into R, take a look at it using the functions we've learned to make sure the import looks okay. Does the tibble have the right number of rows and columns? Do the column names look okay? How about the formatting of the values? Do you have any `NA` values? (If you have `NA`s, is that what you intended?)
+
+You may find that your column names are slightly changed. For example, you may find that some of your column names are surrounded by ` `. The reason for this is that legal column names in R cannot start with a number or have a variety of special characters in them, including spaces. However, column names that are wrapped by ` ` can have special characters or start with numbers, so the import function may have fixed this for you.
+
+## Tidying your data.
+
+*The information in this section is drawn from [Chapter 12 of R for Data Science](https://r4ds.had.co.nz/tidy-data.html). Check it for more details.
+
+Working with data in R is much easier if it is in a tidy format.
+
+>There are three interrelated rules which make a dataset tidy:
+>
+>    1. Each variable must have its own column.
+>    2. Each observation must have its own row.
+>    3. Each value must have its own cell.
+
+If you recorded your data according to the instructions, your data are probably in a tidy format. If so, you can skip to the next section.
+
+One common *not yet tidy* format to record data is to have species names as rows, and observations periods as columns. If you did this, read on! If you recorded your data in some other non-tidy format, your best bet on this occasion to to manually put it into a tidy format.
+
+If you have observation periods as column names, notice that these column names are not really individual variables, but rather values of a single variable- the observation time.
+
+This is a common way for a data table to be untidy, probably because it is a really simple way to record data. We can use the function `pivot_longer()` to transform this data table. `pivot_longer()` takes three values:
+
+1. The set of columns whose names are values, not variables, in the form `c("a","b","c")`
+2. The name of the variable to create and move the column **names** to.
+3. The name of the variable to create and move the column **values** to.
+
+See [section 12.3.1](https://r4ds.had.co.nz/tidy-data.html#longer) for an example with code you can try out.
+
+<!-- ```{r} -->
+
+<!-- untidy_intertidal_data <- read_excel("") -->
+<!-- head(untidy_intertidal_data) -->
+<!-- tidy_intertidal_counts <- untidy_intertidal_data %>% -->
+<!--   pivot_longer(c("inside", "outside"), names_to = "location", values_to = "count")  -->
+<!-- head(tidy_intertidal_counts) -->
+<!-- ``` -->
+
+## How should I handle paired data?
+
+Let's take a look at the "untidy" data above
+
+<!-- ```{r} -->
+<!-- head(untidy_intertidal_data) -->
+<!-- ``` -->
+
+Is this a tidy data set? I can see it two ways.
+
+*Yes it is*: Each tidepool area in the intertidal has it's own line, and there are three variables for each area.
+
+*No it isn't*: It isn't tidy, because the variables should really be what tide pool was it, what the count was, and if the count was in or out of the tidepool in that area.
+
+I think that there are actually merits to both of these views. And during this analysis, some of the things we want to do will be easier with the first view, and some will be easier with the second view.
+
+We can easily convert between them using the functions `pivot_longer` and `pivot_wider`, as we saw above.
+
+## Plotting our data
+
+### 4. Create one or more plots using `ggplot` to visualize your data. Be sure to label your axes!
+
+When we examined stickleback data in class 7, we saw at least 4 different ways to plot data with one categorical variable and one quantiative variable.
+
+It's possible that you can create the plot directly from the data that you imported. If so, go for it!
+
+If the right variable for you to plot needs to be calculated from the data, use data wrangling functions like `mutate` to create a new variable.
+
+If you have paired data, use the *long* format of the data, and in addition to plotting the individual counts, you can add a line by adding an additional layer using `geom_line`. Something like this:
+
+You have a data set, sample_intertidal_data, its has data variable, "location" "count" "size". I want to draw a graph of mapping each data of "count" as a scatter point for each "location", with factoring the color as "size." Also, I would like to add an error bar of statistical infomaiton of "count" overrapping the scatter plot.
+
+```{r}
+library(ggplot2)
+
+### Just a scatter plot:
+# sample_intertidal_data %>%
+#   ggplot(mapping = aes(x = location, y = count, color = as.factor(size))) +
+#   geom_jitter() +
+#   labs(x = "Location", y = "Counts", title = "Distribution of Chiton")
+
+### with stats ssummary
+library(dplyr)
+
+mean_sd_data <- sample_intertidal_data %>%
+  group_by(location) %>%
+  summarise(mean = mean(count),
+            sd = sd(count))
+
+ggplot(mean_sd_data, aes(x = location, y = mean)) +
+  geom_col(width = 0.6, position = "dodge") +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.6, position = position_dodge(0.5)) +
+  geom_point(data = sample_intertidal_data, aes(x = location, y = count, color = as.factor(size)), size = 1.5, position = position_jitter(width = 0.2, height = 0)) +
+  labs(x = "Location", y = "Counts", title = "Distribution of Chiton")+
+  scale_x_discrete(limits = c("low", "mid", "high"))
+```
+
+
+## Calculating summary statistics
+
+### 5. What summary statistics should you calculate from your data to quantify any differences (or lack thereof) in different regions of the intertidal? 
+
+We've discussed the mean, median, standard deviation, and interquartile range. Write down (so you can remember it) *why* you made the choices you did.
+
+Look at your plot(s) and decide which would be a better descriptions. You might want to take a look back at [Ch 5])(https://openintro-ims.netlify.app/explore-numerical.html) of our text.
+
+If you have paired data, you may need calculate the difference between pairs using `mutate` before you calculate a summary statistic. This will be easier to do with the *wide* data set, rather than the *long* data set used for plotting above.
+
+### 6. Describe your results in writing, making reference to the summary statistics you calculated.
+
+
+### 7. Look back to your research question and the hypothesis you generated. Do your data support or refute your hypothesis?
+
+
+
