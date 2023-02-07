@@ -130,16 +130,18 @@ library(ggplot2)
 ### with stats ssummary
 library(dplyr)
 
+# Calculate the mean and standard deviation for each location
 mean_sd_data <- sample_intertidal_data %>%
   group_by(location) %>%
   summarise(mean = mean(count),
             sd = sd(count))
 
+# Create the plot
 ggplot(mean_sd_data, aes(x = location, y = mean)) +
-  geom_col(width = 0.6, position = "dodge") +
-  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.6, position = position_dodge(0.5)) +
+  geom_point(data = mean_sd_data, size = 4) +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.1, position = position_dodge(0.5)) +
   geom_point(data = sample_intertidal_data, aes(x = location, y = count, color = as.factor(size)), size = 1.5, position = position_jitter(width = 0.2, height = 0)) +
-  labs(x = "Location", y = "Counts", title = "Distribution of Chiton")+
+  labs(x = "Location", y = "Counts", title = "Distribution of Chiton") +
   scale_x_discrete(limits = c("low", "mid", "high"))
 ```
 
